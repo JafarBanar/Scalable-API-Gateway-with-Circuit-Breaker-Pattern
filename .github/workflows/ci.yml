@@ -95,10 +95,16 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Run Go Security Scanner
-      uses: golang/govulncheck-action@v1
+    - name: Set up Go
+      uses: actions/setup-go@v5
       with:
         go-version: '1.21'
+
+    - name: Run Go Security Scanner
+      run: |
+        cd api-gateway
+        go install golang.org/x/vuln/cmd/govulncheck@latest
+        govulncheck -C . -format text ./...
 
     - name: Run Rust Security Scanner
       uses: actions-rs/audit-check@v1
