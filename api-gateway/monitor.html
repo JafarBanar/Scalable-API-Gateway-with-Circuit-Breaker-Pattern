@@ -261,11 +261,11 @@
                     x: {
                         type: 'time',
                         time: {
-                            unit: 'millisecond',
+                            unit: 'second',
                             displayFormats: {
-                                millisecond: 'HH:mm:ss.SSS'
+                                second: 'HH:mm:ss'
                             },
-                            tooltipFormat: 'HH:mm:ss.SSS'
+                            tooltipFormat: 'HH:mm:ss'
                         },
                         title: {
                             display: true,
@@ -276,7 +276,8 @@
                         },
                         ticks: {
                             source: 'auto',
-                            maxRotation: 0
+                            maxRotation: 0,
+                            autoSkip: false
                         }
                     }
                 },
@@ -289,8 +290,7 @@
                                     hour12: false,
                                     hour: '2-digit',
                                     minute: '2-digit',
-                                    second: '2-digit',
-                                    fractionalSecondDigits: 3
+                                    second: '2-digit'
                                 });
                                 return [`Time: ${time}`, `State: ${states[context.parsed.y]}`];
                             }
@@ -338,15 +338,6 @@
             // Only add new point if it's different from the last state
             const lastPoint = stateChart.data.datasets[0].data[stateChart.data.datasets[0].data.length - 1];
             if (!lastPoint || lastPoint.y !== stateValue) {
-                // Add a small offset to the timestamp to prevent overlapping
-                // Skip offset for half-open to closed transition
-                if (lastPoint && !(lastPoint.y === 1 && stateValue === 0)) {
-                    const offsetPoint = {
-                        x: new Date(now.getTime() - 1), // 1ms offset
-                        y: lastPoint.y
-                    };
-                    stateChart.data.datasets[0].data.push(offsetPoint);
-                }
                 stateChart.data.datasets[0].data.push(newPoint);
                 console.log('Added new point with state value:', stateValue);
             }
