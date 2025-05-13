@@ -46,9 +46,14 @@ jobs:
         cd cache-service
         cargo test --verbose
 
+    - name: Install Docker Compose
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker-compose-plugin
+
     - name: Build Docker Images
       run: |
-        docker-compose build
+        docker compose build
 
   security-scan:
     runs-on: ubuntu-latest
