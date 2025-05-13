@@ -261,10 +261,11 @@
                     x: {
                         type: 'time',
                         time: {
-                            unit: 'second',
+                            unit: 'millisecond',
                             displayFormats: {
-                                second: 'HH:mm:ss.SSS'  // Show milliseconds
-                            }
+                                millisecond: 'HH:mm:ss.SSS'
+                            },
+                            tooltipFormat: 'HH:mm:ss.SSS'
                         },
                         title: {
                             display: true,
@@ -272,6 +273,10 @@
                         },
                         grid: {
                             color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        ticks: {
+                            source: 'auto',
+                            maxRotation: 0
                         }
                     }
                 },
@@ -280,7 +285,14 @@
                         callbacks: {
                             label: function(context) {
                                 const states = ['Closed', 'Half-Open', 'Open'];
-                                return `State: ${states[context.parsed.y]}`;
+                                const time = new Date(context.parsed.x).toLocaleTimeString('en-US', { 
+                                    hour12: false,
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    second: '2-digit',
+                                    fractionalSecondDigits: 3
+                                });
+                                return [`Time: ${time}`, `State: ${states[context.parsed.y]}`];
                             }
                         }
                     },
@@ -326,14 +338,6 @@
             // Only add new point if it's different from the last state
             const lastPoint = stateChart.data.datasets[0].data[stateChart.data.datasets[0].data.length - 1];
             if (!lastPoint || lastPoint.y !== stateValue) {
-                // Add a small delay (100ms) between points to make transitions visible
-                if (lastPoint) {
-                    const transitionPoint = {
-                        x: new Date(now.getTime() - 100),
-                        y: lastPoint.y
-                    };
-                    stateChart.data.datasets[0].data.push(transitionPoint);
-                }
                 stateChart.data.datasets[0].data.push(newPoint);
                 console.log('Added new point with state value:', stateValue);
             }
