@@ -263,7 +263,7 @@
                         time: {
                             unit: 'second',
                             displayFormats: {
-                                second: 'HH:mm:ss'
+                                second: 'HH:mm:ss.SSS'  // Show milliseconds
                             }
                         },
                         title: {
@@ -326,6 +326,14 @@
             // Only add new point if it's different from the last state
             const lastPoint = stateChart.data.datasets[0].data[stateChart.data.datasets[0].data.length - 1];
             if (!lastPoint || lastPoint.y !== stateValue) {
+                // Add a small delay (100ms) between points to make transitions visible
+                if (lastPoint) {
+                    const transitionPoint = {
+                        x: new Date(now.getTime() - 100),
+                        y: lastPoint.y
+                    };
+                    stateChart.data.datasets[0].data.push(transitionPoint);
+                }
                 stateChart.data.datasets[0].data.push(newPoint);
                 console.log('Added new point with state value:', stateValue);
             }
