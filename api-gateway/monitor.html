@@ -198,13 +198,13 @@
                     borderColor: '#007bff', // Blue line
                     backgroundColor: 'rgba(0, 123, 255, 0.1)', // Light blue background
                     borderWidth: 4,
-                    pointRadius: 25,
-                    pointHoverRadius: 30,
+                    pointRadius: 15,
+                    pointHoverRadius: 20,
                     stepped: 'before',
                     fill: true,
                     tension: 0,
                     pointStyle: 'circle',
-                    pointBorderWidth: 5,
+                    pointBorderWidth: 3,
                     pointBackgroundColor: function(context) {
                         if (!context || !context.raw || context.raw.y === undefined) {
                             return '#155724'; // Default to green
@@ -338,6 +338,14 @@
             // Only add new point if it's different from the last state
             const lastPoint = stateChart.data.datasets[0].data[stateChart.data.datasets[0].data.length - 1];
             if (!lastPoint || lastPoint.y !== stateValue) {
+                // Add a small offset to the timestamp to prevent overlapping
+                if (lastPoint) {
+                    const offsetPoint = {
+                        x: new Date(now.getTime() - 1), // 1ms offset
+                        y: lastPoint.y
+                    };
+                    stateChart.data.datasets[0].data.push(offsetPoint);
+                }
                 stateChart.data.datasets[0].data.push(newPoint);
                 console.log('Added new point with state value:', stateValue);
             }
