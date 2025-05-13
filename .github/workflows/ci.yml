@@ -1,5 +1,6 @@
 name: CI/CD Pipeline
 
+# This workflow runs on push to main and pull requests to main
 on:
   push:
     branches: [ main ]
