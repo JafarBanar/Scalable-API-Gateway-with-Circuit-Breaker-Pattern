@@ -1,6 +1,7 @@
 package circuitbreaker
 
 import (
+	"fmt"
 	"testing"
 	"time"
 )
@@ -23,15 +24,18 @@ func TestCircuitBreakerStateTransitions(t *testing.T) {
 
 	// Test half-open state after timeout
 	time.Sleep(150 * time.Millisecond)
-	if !cb.AllowRequest() {
+	allowed := cb.AllowRequest() // This should transition to HALF-OPEN
+	if !allowed {
 		t.Error("Expected request to be allowed in half-open state")
 	}
 	if cb.GetState() != StateHalfOpen {
 		t.Errorf("Expected state to be HALF-OPEN after timeout, got %v", cb.GetState())
 	}
 
-	// Test successful recovery
+	// Test successful recovery (call RecordSuccess immediately after first AllowRequest)
 	cb.RecordSuccess()
+	fmt.Printf("State after RecordSuccess: %v\n", cb.GetState())
+	time.Sleep(10 * time.Millisecond) // Small delay to allow state update
 	if cb.GetState() != StateClosed {
 		t.Errorf("Expected state to be CLOSED after success, got %v", cb.GetState())
 	}

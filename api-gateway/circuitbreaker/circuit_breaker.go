@@ -1,6 +1,7 @@
 package circuitbreaker
 
 import (
+	"fmt"
 	"sync"
 	"time"
 )
@@ -67,21 +68,29 @@ func (cb *CircuitBreaker) RecordSuccess() {
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
 
+	fmt.Printf("[DEBUG] RecordSuccess called. State before: %v\n", cb.state)
 	cb.successCount++
 	cb.totalCount++
 
 	if cb.state == StateHalfOpen {
+		fmt.Println("[DEBUG] Transitioning from HALF-OPEN to CLOSED")
 		cb.state = StateClosed
 		cb.failureCount = 0
+		cb.successCount = 0 // Reset success count when transitioning to CLOSED
+		cb.totalCount = 0   // Reset total count when transitioning to CLOSED
+		return              // Return immediately after transitioning to CLOSED
 	}
 
-	// Check if we need to transition to OPEN state based on success rate
+	// Only check success rate if we're in CLOSED state
 	if cb.state == StateClosed && cb.totalCount > 0 {
 		currentSuccessRate := float64(cb.successCount) / float64(cb.totalCount)
+		fmt.Printf("[DEBUG] Current success rate: %.2f\n", currentSuccessRate)
 		if currentSuccessRate < cb.successRate {
+			fmt.Println("[DEBUG] Success rate below threshold, transitioning to OPEN")
 			cb.state = StateOpen
 		}
 	}
+	fmt.Printf("[DEBUG] RecordSuccess finished. State after: %v\n", cb.state)
 }
 
 // AllowRequest determines if a request should be allowed based on the current state
@@ -89,18 +98,24 @@ func (cb *CircuitBreaker) AllowRequest() bool {
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
 
+	fmt.Printf("[DEBUG] AllowRequest called. State: %v\n", cb.state)
 	switch cb.state {
 	case StateClosed:
+		fmt.Println("[DEBUG] State is CLOSED, allowing request.")
 		return true
 	case StateOpen:
 		if time.Since(cb.lastFailureTime) >= cb.resetTimeout {
+			fmt.Println("[DEBUG] Timeout passed, transitioning to HALF-OPEN.")
 			cb.state = StateHalfOpen
 			return true
 		}
+		fmt.Println("[DEBUG] State is OPEN, request not allowed.")
 		return false
 	case StateHalfOpen:
+		fmt.Println("[DEBUG] State is HALF-OPEN, allowing request.")
 		return true
 	default:
+		fmt.Println("[DEBUG] Unknown state, request not allowed.")
 		return false
 	}
 }
