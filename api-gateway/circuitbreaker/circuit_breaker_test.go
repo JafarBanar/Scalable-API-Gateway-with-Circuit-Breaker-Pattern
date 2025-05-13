@@ -6,7 +6,7 @@ import (
 )
 
 func TestCircuitBreakerStateTransitions(t *testing.T) {
-	cb := NewCircuitBreaker(3, 5*time.Second, 0.5)
+	cb := NewCircuitBreaker(3, 100*time.Millisecond, 0.5)
 
 	// Test initial state
 	if cb.GetState() != StateClosed {
@@ -22,7 +22,10 @@ func TestCircuitBreakerStateTransitions(t *testing.T) {
 	}
 
 	// Test half-open state after timeout
-	time.Sleep(5 * time.Second)
+	time.Sleep(150 * time.Millisecond)
+	if !cb.AllowRequest() {
+		t.Error("Expected request to be allowed in half-open state")
+	}
 	if cb.GetState() != StateHalfOpen {
 		t.Errorf("Expected state to be HALF-OPEN after timeout, got %v", cb.GetState())
 	}
@@ -35,7 +38,7 @@ func TestCircuitBreakerStateTransitions(t *testing.T) {
 }
 
 func TestCircuitBreakerFailureThreshold(t *testing.T) {
-	cb := NewCircuitBreaker(2, 5*time.Second, 0.5)
+	cb := NewCircuitBreaker(2, 100*time.Millisecond, 0.5)
 
 	// Test failure threshold
 	cb.RecordFailure()
@@ -50,7 +53,7 @@ func TestCircuitBreakerFailureThreshold(t *testing.T) {
 }
 
 func TestCircuitBreakerSuccessRate(t *testing.T) {
-	cb := NewCircuitBreaker(3, 5*time.Second, 0.6)
+	cb := NewCircuitBreaker(3, 100*time.Millisecond, 0.6)
 
 	// Test success rate threshold
 	cb.RecordSuccess()
