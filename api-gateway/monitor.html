@@ -339,7 +339,8 @@
             const lastPoint = stateChart.data.datasets[0].data[stateChart.data.datasets[0].data.length - 1];
             if (!lastPoint || lastPoint.y !== stateValue) {
                 // Add a small offset to the timestamp to prevent overlapping
-                if (lastPoint) {
+                // Skip offset for half-open to closed transition
+                if (lastPoint && !(lastPoint.y === 1 && stateValue === 0)) {
                     const offsetPoint = {
                         x: new Date(now.getTime() - 1), // 1ms offset
                         y: lastPoint.y
