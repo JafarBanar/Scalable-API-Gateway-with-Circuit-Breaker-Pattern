@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Circuit Breaker Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .closed { background-color: #d4edda; color: #155724; }
+        .open { background-color: #f8d7da; color: #721c24; }
+        .half-open { background-color: #fff3cd; color: #856404; }
+        .chart-container {
+            margin-top: 20px;
+            height: 300px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .timeline {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .event {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid #007bff;
+            background-color: #e9ecef;
+        }
+        .instructions {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #e3f2fd;
+            border-radius: 4px;
+            border-left: 4px solid #2196f3;
+        }
+        .test-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .test-button:hover {
+            background-color: #45a049;
+        }
+        .explanation {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #6c757d;
+        }
+        .explanation h2 {
+            color: #495057;
+            margin-top: 0;
+        }
+        .explanation h3 {
+            color: #6c757d;
+            margin-top: 20px;
+        }
+        .explanation ul {
+            padding-left: 20px;
+        }
+        .explanation li {
+            margin: 10px 0;
+        }
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .tech-item {
+            background-color: #e9ecef;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Circuit Breaker Monitor</h1>
+        
+        <div class="explanation">
+            <h2>About This Application</h2>
+            <p>This is a scalable API Gateway with circuit breaker pattern implementation. It demonstrates how to build resilient microservices that can gracefully handle failures and prevent cascading issues in distributed systems.</p>
+
+            <h3>Circuit Breaker Pattern</h3>
+            <p>The circuit breaker pattern is a design pattern used in distributed systems to prevent cascading failures. It works like an electrical circuit breaker:</p>
+            <ul>
+                <li><strong>CLOSED State (Green):</strong> Normal operation, requests are allowed through to the service.</li>
+                <li><strong>OPEN State (Red):</strong> Service is failing, requests are immediately rejected to prevent overload.</li>
+                <li><strong>HALF-OPEN State (Yellow):</strong> Testing if the service has recovered, allowing limited requests through.</li>
+            </ul>
+
+            <h3>Why Use Circuit Breakers?</h3>
+            <ul>
+                <li>Prevents cascading failures in distributed systems</li>
+                <li>Reduces load on failing services</li>
+                <li>Provides graceful degradation of service</li>
+                <li>Enables automatic recovery when services are healthy</li>
+            </ul>
+
+            <h3>Technology Stack</h3>
+            <div class="tech-stack">
+                <span class="tech-item">Go (API Gateway)</span>
+                <span class="tech-item">Rust (Cache Service)</span>
+                <span class="tech-item">Redis (Caching)</span>
+                <span class="tech-item">WebSocket (Real-time Updates)</span>
+                <span class="tech-item">Chart.js (Visualization)</span>
+                <span class="tech-item">Docker (Containerization)</span>
+            </div>
+
+            <h3>How It Works</h3>
+            <ol>
+                <li>The API Gateway acts as a single entry point for all client requests</li>
+                <li>When a service (like the cache service) starts failing, the circuit breaker opens</li>
+                <li>Failed requests are tracked, and after 3 consecutive failures, the circuit opens</li>
+                <li>After a timeout period (10 seconds), the circuit goes to half-open state</li>
+                <li>If a test request succeeds, the circuit closes and normal operation resumes</li>
+            </ol>
+
+            <h3>Monitoring Dashboard</h3>
+            <p>This dashboard provides real-time visualization of the circuit breaker's state:</p>
+            <ul>
+                <li><strong>Current State:</strong> Shows the present state of the circuit breaker</li>
+                <li><strong>State Graph:</strong> Visualizes state changes over time</li>
+                <li><strong>Timeline:</strong> Records all state transitions with timestamps</li>
+            </ul>
+        </div>
+
+        <div class="instructions">
+            <h3>How to Test the Circuit Breaker:</h3>
+            <p>Click the button below to run a demonstration sequence:</p>
+            <button onclick="runTest()" class="test-button">Run Circuit Breaker Test</button>
+            <p>The test will:</p>
+            <ol>
+                <li>Start in CLOSED state (green)</li>
+                <li>Simulate 3 failures to trigger OPEN state (red)</li>
+                <li>Wait 10 seconds for HALF-OPEN state (yellow)</li>
+                <li>Simulate success to return to CLOSED state (green)</li>
+            </ol>
+        </div>
+
+        <div id="currentStatus" class="status">
+            Loading...
+        </div>
+
+        <div class="chart-container">
+            <canvas id="stateChart"></canvas>
+        </div>
+
+        <div class="timeline">
+            <h2>State Change Timeline</h2>
+            <div id="timeline"></div>
+        </div>
+    </div>
+
+    <script>
+        const ws = new WebSocket('ws://' + window.location.host + '/ws');
+        const timeline = document.getElementById('timeline');
+        const currentStatus = document.getElementById('currentStatus');
+        
+        // Chart configuration
+        const chartConfig = {
+            type: 'line',
+            data: {
+                datasets: [{
+                    label: 'Circuit State',
+                    data: [],
+                    borderColor: '#007bff', // Blue line
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)', // Light blue background
+                    borderWidth: 4,
+                    pointRadius: 25,
+                    pointHoverRadius: 30,
+                    stepped: 'before',
+                    fill: true,
+                    tension: 0,
+                    pointStyle: 'circle',
+                    pointBorderWidth: 5,
+                    pointBackgroundColor: function(context) {
+                        if (!context || !context.raw || context.raw.y === undefined) {
+                            return '#155724'; // Default to green
+                        }
+                        const value = context.raw.y;
+                        const colors = {
+                            0: '#155724', // Closed - Green
+                            1: '#856404', // Half-Open - Yellow
+                            2: '#721c24'  // Open - Red
+                        };
+                        return colors[value] || '#155724';
+                    },
+                    pointBorderColor: function(context) {
+                        if (!context || !context.raw || context.raw.y === undefined) {
+                            return '#155724'; // Default to green
+                        }
+                        const value = context.raw.y;
+                        const colors = {
+                            0: '#155724', // Closed - Green
+                            1: '#856404', // Half-Open - Yellow
+                            2: '#721c24'  // Open - Red
+                        };
+                        return colors[value] || '#155724';
+                    }
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                scales: {
+                    y: {
+                        min: -0.5,
+                        max: 2.5,
+                        ticks: {
+                            stepSize: 1,
+                            callback: function(value) {
+                                const states = ['Closed', 'Half-Open', 'Open'];
+                                return states[value] || '';
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Circuit State'
+                        }
+                    },
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'second',
+                            displayFormats: {
+                                second: 'HH:mm:ss'
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Time'
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const states = ['Closed', 'Half-Open', 'Open'];
+                                return `State: ${states[context.parsed.y]}`;
+                            }
+                        }
+                    },
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        };
+
+        // Initialize chart
+        const ctx = document.getElementById('stateChart').getContext('2d');
+        const stateChart = new Chart(ctx, chartConfig);
+
+        function updateChart(state) {
+            console.log('Updating chart with state:', state);
+            const stateValue = {
+                'closed': 0,
+                'half-open': 1,
+                'open': 2,
+                // Keep uppercase versions for backward compatibility
+                'CLOSED': 0,
+                'HALF-OPEN': 1,
+                'OPEN': 2
+            }[state.toLowerCase()];
+
+            if (stateValue === undefined) {
+                console.error('Invalid state value:', state);
+                return;
+            }
+
+            const now = new Date();
+            console.log('Adding data point:', { x: now, y: stateValue });
+            
+            // Add new data point
+            const newPoint = {
+                x: now,
+                y: stateValue
+            };
+            
+            console.log('New point configuration:', newPoint);
+            
+            // Only add new point if it's different from the last state
+            const lastPoint = stateChart.data.datasets[0].data[stateChart.data.datasets[0].data.length - 1];
+            if (!lastPoint || lastPoint.y !== stateValue) {
+                stateChart.data.datasets[0].data.push(newPoint);
+                console.log('Added new point with state value:', stateValue);
+            }
+
+            // Keep only last 30 seconds of data
+            const thirtySecondsAgo = new Date(now.getTime() - 30000);
+            stateChart.data.datasets[0].data = stateChart.data.datasets[0].data.filter(point => point.x >= thirtySecondsAgo);
+
+            console.log('Current data points:', stateChart.data.datasets[0].data);
+            
+            // Force chart update with no animation
+            stateChart.update('none');
+            console.log('Chart updated with new point');
+
+            // Verify the colors after update
+            const currentPoints = stateChart.data.datasets[0].data;
+            console.log('Verifying point colors after update:');
+            currentPoints.forEach((point, index) => {
+                const colors = {
+                    0: '#155724', // Closed - Green
+                    1: '#856404', // Half-Open - Yellow
+                    2: '#721c24'  // Open - Red
+                };
+                console.log(`Point ${index}:`, {
+                    state: ['Closed', 'Half-Open', 'Open'][point.y],
+                    color: colors[point.y]
+                });
+            });
+        }
+
+        function updateStatus(state) {
+            console.log('Updating status display:', state);
+            currentStatus.textContent = `Current State: ${state.toUpperCase()}`;
+            currentStatus.className = 'status ' + state.toLowerCase();
+        }
+
+        function addTimelineEvent(from, to, time) {
+            console.log('Adding timeline event:', { from, to, time });
+            const event = document.createElement('div');
+            event.className = 'event';
+            event.innerHTML = `
+                <strong>${time}</strong><br>
+                State changed from ${from} to ${to}
+            `;
+            timeline.insertBefore(event, timeline.firstChild);
+        }
+
+        function runTest() {
+            console.log('Starting circuit breaker test');
+            fetch('/test-circuit')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Test started:', data);
+                })
+                .catch(error => {
+                    console.error('Error starting test:', error);
+                });
+        }
+
+        ws.onmessage = function(event) {
+            console.log('WebSocket message received:', event.data);
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'initial_state') {
+                console.log('Setting initial state:', data.state);
+                updateStatus(data.state);
+                updateChart(data.state);
+            } else if (data.type === 'state_change') {
+                console.log('State change detected:', data.from, '->', data.to);
+                updateStatus(data.to);
+                updateChart(data.to);
+                addTimelineEvent(data.from, data.to, new Date(data.time).toLocaleString());
+            }
+        };
+
+        ws.onopen = function() {
+            console.log('WebSocket connection established');
+        };
+
+        ws.onerror = function(error) {
+            console.error('WebSocket error:', error);
+        };
+
+        ws.onclose = function() {
+            console.log('WebSocket connection closed');
+            currentStatus.textContent = 'Connection Lost';
+            currentStatus.className = 'status';
+        };
+    </script>
+</body>
+</html> 

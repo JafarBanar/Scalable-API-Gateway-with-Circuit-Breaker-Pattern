@@ -1,0 +1,19 @@
+[package]
+name = "cache-service"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1.36", features = ["full"] }
+axum = "0.7"
+tower = "0.4"
+tower-http = { version = "0.5", features = ["trace"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+redis = { version = "0.24", features = ["tokio-comp"] }
+async-trait = "0.1"
+thiserror = "1.0"
+zerovec = "0.10.0"  # Using an older version that's compatible with Rust 1.82
+hyper = { version = "1.0", features = ["full"] } 
