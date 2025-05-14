@@ -198,13 +198,13 @@
                     borderColor: '#007bff', // Blue line
                     backgroundColor: 'rgba(0, 123, 255, 0.1)', // Light blue background
                     borderWidth: 4,
-                    pointRadius: 25,
-                    pointHoverRadius: 30,
+                    pointRadius: 15,
+                    pointHoverRadius: 20,
                     stepped: 'before',
                     fill: true,
                     tension: 0,
                     pointStyle: 'circle',
-                    pointBorderWidth: 5,
+                    pointBorderWidth: 3,
                     pointBackgroundColor: function(context) {
                         if (!context || !context.raw || context.raw.y === undefined) {
                             return '#155724'; // Default to green
@@ -264,7 +264,8 @@
                             unit: 'second',
                             displayFormats: {
                                 second: 'HH:mm:ss'
-                            }
+                            },
+                            tooltipFormat: 'HH:mm:ss'
                         },
                         title: {
                             display: true,
@@ -272,6 +273,11 @@
                         },
                         grid: {
                             color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        ticks: {
+                            source: 'auto',
+                            maxRotation: 0,
+                            autoSkip: false
                         }
                     }
                 },
@@ -280,7 +286,13 @@
                         callbacks: {
                             label: function(context) {
                                 const states = ['Closed', 'Half-Open', 'Open'];
-                                return `State: ${states[context.parsed.y]}`;
+                                const time = new Date(context.parsed.x).toLocaleTimeString('en-US', { 
+                                    hour12: false,
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    second: '2-digit'
+                                });
+                                return [`Time: ${time}`, `State: ${states[context.parsed.y]}`];
                             }
                         }
                     },

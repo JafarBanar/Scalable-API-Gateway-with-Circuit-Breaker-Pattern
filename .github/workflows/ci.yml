@@ -1,5 +1,6 @@
 name: CI/CD Pipeline
 
+# This workflow runs on push to main and pull requests to main
 on:
   push:
     branches: [ main ]
@@ -16,19 +17,20 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.21'
+        go-version: '1.23'
         cache: true
+        cache-dependency-path: api-gateway/go.sum
 
     - name: Set up Rust
-      uses: actions-rs/toolchain@v1
+      uses: dtolnay/rust-toolchain@stable
       with:
-        toolchain: stable
-        override: true
+        components: rustfmt, clippy
 
     - name: Build API Gateway
       run: |
         cd api-gateway
         go mod download
+        go mod tidy
         go build -v ./...
 
     - name: Build Cache Service
@@ -46,6 +48,42 @@ jobs:
         cd cache-service
         cargo test --verbose
 
+    - name: Install Docker
+      run: |
+        # Remove old versions
+        sudo apt-get remove -y docker docker-engine docker.io containerd runc || true
+        
+        # Update package index
+        sudo apt-get update
+        
+        # Install prerequisites
+        sudo apt-get install -y \
+            apt-transport-https \
+            ca-certificates \
+            curl \
+            gnupg \
+            lsb-release
+        
+        # Add Docker's official GPG key
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+        
+        # Set up the stable repository
+        echo \
+          "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+          $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+        
+        # Install Docker Engine
+        sudo apt-get update
+        sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+        
+        # Install Docker Compose
+        sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        sudo chmod +x /usr/local/bin/docker-compose
+        
+        # Verify installations
+        docker --version
+        docker-compose --version
+
     - name: Build Docker Images
       run: |
         docker-compose build
@@ -57,12 +95,24 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Run Go Security Scanner
-      uses: golang/govulncheck-action@v1
+    - name: Set up Go
+      uses: actions/setup-go@v5
       with:
-        go-version: '1.21'
+        go-version: '1.23'
+
+    - name: Set up Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
+
+    - name: Run Go Security Scanner
+      run: |
+        cd api-gateway
+        go install golang.org/x/vuln/cmd/govulncheck@latest
+        govulncheck -C . -format text ./...
 
     - name: Run Rust Security Scanner
-      uses: actions-rs/audit-check@v1
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }} 
+      run: |
+        cd cache-service
+        cargo install cargo-audit
+        cargo audit 
