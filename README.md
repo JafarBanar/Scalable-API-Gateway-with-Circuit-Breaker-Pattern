@@ -120,7 +120,7 @@ Run the circuit breaker test sequence:
 
 ## 🔍 Architecture
 
-![Architecture Diagram](docs/assets/architecture.png)
+![Architecture Diagram](./docs/assets/architecture.png)
 
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
